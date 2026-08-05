@@ -1,0 +1,297 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+enum Role {
+  ADMIN
+  STAFF
+}
+
+enum DocumentStatus {
+  DRAFT
+  QUOTATION
+  CONVERTED
+  UNPAID
+  PARTIALLY_PAID
+  PAID
+  VOIDED
+}
+
+enum PaymentType {
+  CUSTOMER_RECEIPT
+  SUPPLIER_PAYMENT
+}
+
+enum PaymentMode {
+  CASH
+  ONLINE
+  CHEQUE
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  username     String   @unique
+  passwordHash String
+  role         Role     @default(STAFF)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  createdSales     Sale[]     @relation("SaleCreatedBy")
+  createdPurchases Purchase[] @relation("PurchaseCreatedBy")
+  createdPayments  Payment[]  @relation("PaymentCreatedBy")
+  createdExpenses  Expense[]  @relation("ExpenseCreatedBy")
+}
+
+enum ProductCategory {
+  PHYSICAL_GOODS
+  DIGITAL_GOODS
+  SERVICES
+  LABOR
+}
+
+model ProductType {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  products Product[]
+}
+
+model Product {
+  id            String          @id @default(cuid())
+  productTypeId String
+  name          String
+  unit          String
+  rate          Decimal         @db.Decimal(15, 2)
+  taxPercentage Decimal         @default(0) @db.Decimal(5, 2)
+  category      ProductCategory @default(PHYSICAL_GOODS)
+  isBundle      Boolean         @default(false)
+  isActive      Boolean         @default(true)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  productType   ProductType     @relation(fields: [productTypeId], references: [id], onDelete: Restrict)
+  bundleItems   BundleItem[]    @relation("BundleProduct")
+  includedIn    BundleItem[]    @relation("BundledProductItems")
+  saleItems     SaleItem[]
+  purchaseItems PurchaseItem[]
+
+  @@unique([productTypeId, name])
+  @@index([category])
+  @@index([isBundle])
+}
+
+model BundleItem {
+  id              String   @id @default(cuid())
+  bundleProductId String
+  productId       String
+  quantity        Decimal  @default(1) @db.Decimal(15, 3)
+  rate            Decimal? @db.Decimal(15, 2)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  bundleProduct Product @relation("BundleProduct", fields: [bundleProductId], references: [id], onDelete: Cascade)
+  product       Product @relation("BundledProductItems", fields: [productId], references: [id], onDelete: Restrict)
+
+  @@unique([bundleProductId, productId])
+  @@index([bundleProductId])
+  @@index([productId])
+}
+
+model Customer {
+  id             String   @id @default(cuid())
+  name           String
+  mobile         String?
+  address        String?  @db.Text
+  openingBalance Decimal  @default(0) @db.Decimal(15, 2)
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  sales    Sale[]
+  payments Payment[]
+
+  @@index([name])
+  @@index([mobile])
+}
+
+model Supplier {
+  id             String   @id @default(cuid())
+  name           String
+  mobile         String?
+  address        String?  @db.Text
+  openingBalance Decimal  @default(0) @db.Decimal(15, 2)
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  purchases Purchase[]
+  payments  Payment[]
+
+  @@index([name])
+  @@index([mobile])
+}
+
+model Sale {
+  id            String         @id @default(cuid())
+  customerId    String
+  invoiceNumber String         @unique
+  invoiceDate   DateTime       @db.Date
+  subtotal      Decimal        @db.Decimal(15, 2)
+  taxAmount     Decimal        @default(0) @db.Decimal(15, 2)
+  totalAmount   Decimal        @db.Decimal(15, 2)
+  status        DocumentStatus @default(UNPAID)
+  isQuotation   Boolean        @default(false)
+  quotationId   String?
+  remarks       String?        @db.Text
+  createdById   String
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  voidedAt      DateTime?
+  voidedReason  String?        @db.Text
+
+  customer           Customer            @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  createdBy          User                @relation("SaleCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  quotation          Sale?               @relation("QuotationToSale", fields: [quotationId], references: [id], onDelete: Restrict)
+  convertedSales     Sale[]              @relation("QuotationToSale")
+  items              SaleItem[]
+  paymentAllocations PaymentAllocation[]
+
+  @@index([customerId, invoiceDate])
+  @@index([invoiceDate])
+  @@index([isQuotation])
+}
+
+model SaleItem {
+  id            String   @id @default(cuid())
+  saleId        String
+  productId     String
+  productName   String
+  unit          String
+  quantity      Decimal  @db.Decimal(15, 3)
+  rate          Decimal  @db.Decimal(15, 2)
+  taxPercentage Decimal  @default(0) @db.Decimal(5, 2)
+  taxAmount     Decimal  @default(0) @db.Decimal(15, 2)
+  amount        Decimal  @db.Decimal(15, 2)
+
+  sale    Sale    @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  @@index([saleId])
+}
+
+model Purchase {
+  id            String         @id @default(cuid())
+  supplierId    String
+  billNumber    String
+  purchaseDate  DateTime       @db.Date
+  subtotal      Decimal        @db.Decimal(15, 2)
+  taxAmount     Decimal        @default(0) @db.Decimal(15, 2)
+  totalAmount   Decimal        @db.Decimal(15, 2)
+  status        DocumentStatus @default(UNPAID)
+  remarks       String?        @db.Text
+  createdById   String
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  voidedAt      DateTime?
+  voidedReason  String?        @db.Text
+
+  supplier           Supplier            @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+  createdBy          User                @relation("PurchaseCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  items              PurchaseItem[]
+  paymentAllocations PaymentAllocation[]
+
+  @@unique([supplierId, billNumber])
+  @@index([supplierId, purchaseDate])
+  @@index([purchaseDate])
+}
+
+model PurchaseItem {
+  id            String   @id @default(cuid())
+  purchaseId    String
+  productId     String
+  productName   String
+  unit          String
+  quantity      Decimal  @db.Decimal(15, 3)
+  rate          Decimal  @db.Decimal(15, 2)
+  taxPercentage Decimal  @default(0) @db.Decimal(5, 2)
+  taxAmount     Decimal  @default(0) @db.Decimal(15, 2)
+  amount        Decimal  @db.Decimal(15, 2)
+
+  purchase Purchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+  product  Product  @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  @@index([purchaseId])
+}
+
+model Payment {
+  id           String      @id @default(cuid())
+  type         PaymentType
+  customerId   String?
+  supplierId   String?
+  amount       Decimal     @db.Decimal(15, 2)
+  paymentDate  DateTime    @db.Date
+  paymentMode  PaymentMode @default(CASH)
+  referenceNo  String?
+  remarks      String?     @db.Text
+  createdById  String
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  voidedAt     DateTime?
+  voidedReason String?     @db.Text
+
+  customer    Customer?           @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  supplier    Supplier?           @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+  createdBy   User                @relation("PaymentCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  allocations PaymentAllocation[]
+
+  @@index([customerId, paymentDate])
+  @@index([supplierId, paymentDate])
+}
+
+model PaymentAllocation {
+  id         String   @id @default(cuid())
+  paymentId  String
+  saleId     String?
+  purchaseId String?
+  amount     Decimal  @db.Decimal(15, 2)
+  createdAt  DateTime @default(now())
+
+  payment  Payment   @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  sale     Sale?     @relation(fields: [saleId], references: [id], onDelete: Restrict)
+  purchase Purchase? @relation(fields: [purchaseId], references: [id], onDelete: Restrict)
+
+  @@index([paymentId])
+  @@index([saleId])
+  @@index([purchaseId])
+}
+
+model Expense {
+  id          String   @id @default(cuid())
+  expenseDate DateTime @db.Date
+  category    String
+  amount      Decimal  @db.Decimal(15, 2)
+  remarks     String?  @db.Text
+  createdById String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  createdBy User @relation("ExpenseCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+
+  @@index([expenseDate])
+}
+
+model Setting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String   @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
