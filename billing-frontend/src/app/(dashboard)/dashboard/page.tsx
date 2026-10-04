@@ -39,10 +39,10 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+        <h1 className="text-2xl font-bold tracking-tight text-neutral-900 dark:text-white">
           Dashboard Overview
         </h1>
-        <p className="text-sm text-slate-500 dark:text-slate-400">
+        <p className="text-sm text-neutral-500 dark:text-neutral-400">
           Today is {formatDate(new Date())}
         </p>
       </div>
@@ -54,16 +54,16 @@ export default function DashboardPage() {
           return (
             <div
               key={stat.title}
-              className="flex items-center gap-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900"
+              className="flex items-center gap-4 rounded-xl border border-neutral-200 bg-white p-5 shadow-sm dark:border-neutral-800 dark:bg-neutral-900"
             >
               <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${stat.color}`}>
                 <Icon className="h-6 w-6" />
               </div>
               <div>
-                <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                <p className="text-xs font-medium text-neutral-500 dark:text-neutral-400">
                   {stat.title}
                 </p>
-                <p className="text-xl font-bold text-slate-900 dark:text-white">
+                <p className="text-xl font-bold text-neutral-900 dark:text-white">
                   {metricsLoading ? "..." : stat.value}
                 </p>
               </div>

@@ -5,16 +5,19 @@ import { useAuthStore } from "@/stores/use-auth-store";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-export function useLoginMutation() {
+export function useLoginMutation(targetRedirect?: string | null) {
   const setAuth = useAuthStore((state) => state.setAuth);
+  const expiredRedirectUrl = useAuthStore((state) => state.expiredRedirectUrl);
   const router = useRouter();
 
   return useMutation({
     mutationFn: (credentials: LoginCredentials) => loginApi(credentials),
     onSuccess: (data) => {
-      setAuth(data.accessToken, data.user);
+      setAuth(data.accessToken, data.refreshToken, data.user);
       toast.success(`Welcome back, ${data.user.name}!`);
-      router.push("/dashboard");
+
+      const destination = targetRedirect || expiredRedirectUrl || "/dashboard";
+      router.push(destination);
     },
     onError: (error: any) => {
       const message =

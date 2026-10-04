@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import { CreatePurchaseDto } from './dto/create-purchase.dto';
+import { UpdatePurchaseDto } from './dto/update-purchase.dto';
 import { QueryPurchaseDto } from './dto/query-purchase.dto';
 import { VoidPurchaseDto } from './dto/void-purchase.dto';
 import { DocumentStatus, Prisma } from '@prisma/client';
@@ -50,7 +51,7 @@ export class PurchasesService {
     }
 
     // 2. Fetch products
-    const productIds = dto.items.map((i) => i.productId);
+    const productIds = (dto.items ?? []).map((i) => i.productId);
     const products = await this.prisma.product.findMany({
       where: { id: { in: productIds } },
     });
@@ -61,7 +62,7 @@ export class PurchasesService {
     let subtotal = 0;
     let totalTaxAmount = 0;
 
-    const preparedItems = dto.items.map((item) => {
+    const preparedItems = (dto.items ?? []).map((item) => {
       const product = productMap.get(item.productId);
       if (!product) {
         throw new NotFoundException(
@@ -138,7 +139,9 @@ export class PurchasesService {
   }
 
   async findAllPurchases(query: QueryPurchaseDto) {
-    const where: Prisma.PurchaseWhereInput = {};
+    const where: Prisma.PurchaseWhereInput = {
+      deletedAt: null,
+    };
 
     if (query.supplierId) {
       where.supplierId = query.supplierId;
@@ -220,6 +223,133 @@ export class PurchasesService {
         voidedAt: new Date(),
         voidedReason: dto.reason.trim(),
       },
+    });
+  }
+
+  async updatePurchase(id: string, dto: UpdatePurchaseDto) {
+    const purchase = await this.findOnePurchase(id);
+
+    if (purchase.status === DocumentStatus.VOIDED) {
+      throw new BadRequestException('Cannot edit a voided purchase bill.');
+    }
+
+    if (dto.supplierId && dto.supplierId !== purchase.supplierId) {
+      const supplier = await this.prisma.supplier.findUnique({
+        where: { id: dto.supplierId },
+      });
+      if (!supplier) {
+        throw new NotFoundException(`Supplier with ID '${dto.supplierId}' not found.`);
+      }
+    }
+
+    let subtotal = Number(purchase.subtotal);
+    let totalTaxAmount = Number(purchase.taxAmount);
+    let totalAmount = Number(purchase.totalAmount);
+    let preparedItems: any[] | undefined = undefined;
+
+    if (dto.items !== undefined) {
+      const productIds = (dto.items ?? []).map((i) => i.productId);
+      const products = await this.prisma.product.findMany({
+        where: { id: { in: productIds } },
+      });
+      const productMap = new Map(products.map((p) => [p.id, p]));
+
+      subtotal = 0;
+      totalTaxAmount = 0;
+
+      preparedItems = (dto.items ?? []).map((item) => {
+        const product = productMap.get(item.productId);
+        if (!product) {
+          throw new NotFoundException(
+            `Product with ID '${item.productId}' not found.`,
+          );
+        }
+
+        const rate = item.rate !== undefined ? item.rate : Number(product.rate);
+        const taxPercentage =
+          item.taxPercentage !== undefined
+            ? item.taxPercentage
+            : Number(product.taxPercentage);
+
+        const lineSubtotal = item.quantity * rate;
+        const lineTaxAmount = lineSubtotal * (taxPercentage / 100);
+        const lineTotalAmount = lineSubtotal + lineTaxAmount;
+
+        subtotal += lineSubtotal;
+        totalTaxAmount += lineTaxAmount;
+
+        return {
+          productId: product.id,
+          productName: product.name,
+          unit: product.unit,
+          quantity: item.quantity,
+          rate,
+          taxPercentage,
+          taxAmount: lineTaxAmount,
+          amount: lineTotalAmount,
+        };
+      });
+
+      totalAmount = subtotal + totalTaxAmount;
+    }
+
+    try {
+      return await this.prisma.$transaction(async (tx) => {
+        if (preparedItems !== undefined) {
+          await tx.purchaseItem.deleteMany({
+            where: { purchaseId: id },
+          });
+        }
+
+        return tx.purchase.update({
+          where: { id },
+          data: {
+            ...(dto.supplierId && { supplierId: dto.supplierId }),
+            ...(dto.billNumber && { billNumber: dto.billNumber.trim() }),
+            ...(dto.purchaseDate && { purchaseDate: new Date(dto.purchaseDate) }),
+            ...(dto.remarks !== undefined && { remarks: dto.remarks?.trim() || null }),
+            ...(preparedItems !== undefined && {
+              subtotal,
+              taxAmount: totalTaxAmount,
+              totalAmount,
+              items: {
+                create: preparedItems,
+              },
+            }),
+          },
+          include: {
+            supplier: true,
+            createdBy: {
+              select: { id: true, name: true, username: true },
+            },
+            items: true,
+            paymentAllocations: true,
+          },
+        });
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        throw new ConflictException(
+          `Bill number '${dto.billNumber}' already exists for this supplier.`,
+        );
+      }
+      throw error;
+    }
+  }
+
+  async deletePurchase(id: string) {
+    const purchase = await this.findOnePurchase(id);
+
+    if (purchase.deletedAt) {
+      throw new BadRequestException('Purchase bill is already deleted.');
+    }
+
+    return this.prisma.purchase.update({
+      where: { id },
+      data: { deletedAt: new Date() },
     });
   }
 }

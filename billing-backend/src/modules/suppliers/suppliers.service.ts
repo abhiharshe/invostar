@@ -14,6 +14,8 @@ export class SuppliersService {
       data: {
         name: dto.name.trim(),
         mobile: dto.mobile?.trim() || null,
+        billingAddress: dto.billingAddress ?? undefined,
+        deliveryAddress: dto.deliveryAddress ?? undefined,
         address: dto.address?.trim() || null,
         openingBalance: dto.openingBalance ?? 0,
         isActive: dto.isActive ?? true,
@@ -79,6 +81,8 @@ export class SuppliersService {
         data: {
           ...(dto.name && { name: dto.name.trim() }),
           ...(dto.mobile !== undefined && { mobile: dto.mobile?.trim() || null }),
+          ...(dto.billingAddress !== undefined && { billingAddress: dto.billingAddress }),
+          ...(dto.deliveryAddress !== undefined && { deliveryAddress: dto.deliveryAddress }),
           ...(dto.address !== undefined && { address: dto.address?.trim() || null }),
           ...(dto.openingBalance !== undefined && { openingBalance: dto.openingBalance }),
           ...(dto.isActive !== undefined && { isActive: dto.isActive }),

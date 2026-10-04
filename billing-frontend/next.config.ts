@@ -5,6 +5,9 @@ const nextConfig: NextConfig = {
   /* config options here */
   reactCompiler: true,
   allowedDevOrigins: ['*'],
+  turbopack: {
+    root: __dirname,
+  },
 };
 
 const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");

@@ -31,10 +31,10 @@ export class CreatePurchaseDto {
   @IsString()
   remarks?: string;
 
-  @ApiProperty({ type: [CreatePurchaseItemDto] })
+  @ApiPropertyOptional({ type: [CreatePurchaseItemDto], description: 'Line items (can be empty on initial creation)' })
+  @IsOptional()
   @IsArray()
-  @ArrayMinSize(1)
   @ValidateNested({ each: true })
   @Type(() => CreatePurchaseItemDto)
-  items: CreatePurchaseItemDto[];
+  items?: CreatePurchaseItemDto[];
 }

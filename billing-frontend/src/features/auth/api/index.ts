@@ -7,6 +7,13 @@ export async function loginApi(credentials: LoginCredentials): Promise<LoginResp
   return response.data.data;
 }
 
+export async function refreshTokenApi(refreshToken: string): Promise<LoginResponseData> {
+  const response = await api.post<ApiResponse<LoginResponseData>>("/auth/refresh", {
+    refreshToken,
+  });
+  return response.data.data;
+}
+
 export async function getProfileApi(): Promise<AuthUser> {
   const response = await api.get<ApiResponse<AuthUser>>("/auth/me");
   return response.data.data;

@@ -5,7 +5,7 @@ export default function ResetPasswordPage() {
     <div className="space-y-6">
       <div>
         <h2 className="text-xl font-bold text-white">Set new password</h2>
-        <p className="mt-1 text-sm text-slate-400">
+        <p className="mt-1 text-sm text-neutral-400">
           Your new password must be different from previous passwords.
         </p>
       </div>

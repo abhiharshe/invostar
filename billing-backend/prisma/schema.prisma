@@ -33,14 +33,15 @@ enum PaymentMode {
 }
 
 model User {
-  id           String   @id @default(cuid())
-  name         String
-  username     String   @unique
-  passwordHash String
-  role         Role     @default(STAFF)
-  isActive     Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id               String   @id @default(cuid())
+  name             String
+  username         String   @unique
+  passwordHash     String
+  refreshTokenHash String?  @db.Text
+  role             Role     @default(STAFF)
+  isActive         Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   createdSales     Sale[]     @relation("SaleCreatedBy")
   createdPurchases Purchase[] @relation("PurchaseCreatedBy")
@@ -106,31 +107,37 @@ model BundleItem {
 }
 
 model Customer {
-  id             String   @id @default(cuid())
-  name           String
-  mobile         String?
-  address        String?  @db.Text
-  openingBalance Decimal  @default(0) @db.Decimal(15, 2)
-  isActive       Boolean  @default(true)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id              String   @id @default(cuid())
+  name            String
+  mobile          String?
+  gstin           String?
+  billingAddress  Json?
+  shippingAddress Json?
+  address         String?  @db.Text
+  openingBalance  Decimal  @default(0) @db.Decimal(15, 2)
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   sales    Sale[]
   payments Payment[]
 
   @@index([name])
   @@index([mobile])
+  @@index([gstin])
 }
 
 model Supplier {
-  id             String   @id @default(cuid())
-  name           String
-  mobile         String?
-  address        String?  @db.Text
-  openingBalance Decimal  @default(0) @db.Decimal(15, 2)
-  isActive       Boolean  @default(true)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id              String   @id @default(cuid())
+  name            String
+  mobile          String?
+  billingAddress  Json?
+  deliveryAddress Json?
+  address         String?  @db.Text
+  openingBalance  Decimal  @default(0) @db.Decimal(15, 2)
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   purchases Purchase[]
   payments  Payment[]
@@ -202,6 +209,7 @@ model Purchase {
   updatedAt     DateTime       @updatedAt
   voidedAt      DateTime?
   voidedReason  String?        @db.Text
+  deletedAt     DateTime?
 
   supplier           Supplier            @relation(fields: [supplierId], references: [id], onDelete: Restrict)
   createdBy          User                @relation("PurchaseCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)

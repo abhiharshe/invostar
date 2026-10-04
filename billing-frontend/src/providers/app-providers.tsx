@@ -5,6 +5,7 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { ThemeProvider } from "next-themes";
 import { useState, type ReactNode } from "react";
 import { Toaster } from "sonner";
+import { SessionExpiredModal } from "@/components/modals/session-expired-modal";
 
 export function AppProviders({ children }: { children: ReactNode }) {
   const [queryClient] = useState(() => new QueryClient({
@@ -15,6 +16,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
     <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
       <QueryClientProvider client={queryClient}>
         {children}
+        <SessionExpiredModal />
         <Toaster closeButton position="top-right" richColors />
         {process.env.NODE_ENV === "development" ? <ReactQueryDevtools /> : null}
       </QueryClientProvider>

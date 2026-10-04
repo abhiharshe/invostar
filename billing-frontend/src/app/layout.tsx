@@ -33,7 +33,7 @@ export default async function RootLayout({
       suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full bg-slate-50 font-sans text-slate-950">
+      <body className="min-h-full bg-neutral-50 font-sans text-neutral-950">
         <NextIntlClientProvider locale={locale} messages={messages}>
           <AppProviders>{children}</AppProviders>
         </NextIntlClientProvider>

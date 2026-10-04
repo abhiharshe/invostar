@@ -8,12 +8,12 @@ export default function ForgotPasswordPage() {
       <div>
         <Link
           href="/login"
-          className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-white"
+          className="inline-flex items-center gap-1.5 text-xs text-neutral-400 hover:text-white"
         >
           <ArrowLeft className="h-3.5 w-3.5" /> Back to login
         </Link>
         <h2 className="mt-3 text-xl font-bold text-white">Reset password</h2>
-        <p className="mt-1 text-sm text-slate-400">
+        <p className="mt-1 text-sm text-neutral-400">
           Enter your email and we&apos;ll send you a link to reset your password.
         </p>
       </div>

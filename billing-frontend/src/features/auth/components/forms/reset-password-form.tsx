@@ -4,6 +4,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
@@ -36,33 +38,35 @@ export function ResetPasswordForm() {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      <div>
-        <label className="block text-xs font-medium text-slate-300">
+      <div className="space-y-1.5">
+        <Label htmlFor="password" className="text-neutral-300">
           New password
-        </label>
-        <input
+        </Label>
+        <Input
+          id="password"
           type="password"
           {...register("password")}
-          className="mt-1 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+          className="border-neutral-700 bg-neutral-950 text-white placeholder-slate-500 focus-visible:ring-indigo-500"
           placeholder="••••••••"
         />
         {errors.password && (
-          <p className="mt-1 text-xs text-red-400">{errors.password.message}</p>
+          <p className="text-xs text-red-400">{errors.password.message}</p>
         )}
       </div>
 
-      <div>
-        <label className="block text-xs font-medium text-slate-300">
+      <div className="space-y-1.5">
+        <Label htmlFor="confirmPassword" className="text-neutral-300">
           Confirm new password
-        </label>
-        <input
+        </Label>
+        <Input
+          id="confirmPassword"
           type="password"
           {...register("confirmPassword")}
-          className="mt-1 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+          className="border-neutral-700 bg-neutral-950 text-white placeholder-slate-500 focus-visible:ring-indigo-500"
           placeholder="••••••••"
         />
         {errors.confirmPassword && (
-          <p className="mt-1 text-xs text-red-400">
+          <p className="text-xs text-red-400">
             {errors.confirmPassword.message}
           </p>
         )}

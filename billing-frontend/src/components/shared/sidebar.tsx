@@ -21,11 +21,11 @@ import { cn } from "@/lib/utils";
 
 const navItems = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { label: "Sales", href: "/sales", icon: ShoppingCart },
   { label: "Products", href: "/products", icon: Package },
-  { label: "Customers", href: "/customers", icon: Users },
   { label: "Suppliers", href: "/suppliers", icon: Truck },
+  { label: "Customers", href: "/customers", icon: Users },
   { label: "Purchases", href: "/purchases", icon: Receipt },
+  { label: "Sales", href: "/sales", icon: ShoppingCart },
   { label: "Payments", href: "/payments", icon: CreditCard },
   { label: "Expenses", href: "/expenses", icon: Wallet },
   { label: "Settings", href: "/settings", icon: Settings },
@@ -38,25 +38,25 @@ export function Sidebar() {
   return (
     <aside
       className={cn(
-        "relative flex flex-col border-r border-slate-200 bg-white transition-all duration-300 dark:border-slate-800 dark:bg-slate-900",
+        "relative flex flex-col border-r border-sidebar-border bg-sidebar transition-all duration-300",
         sidebarOpen ? "w-64" : "w-16"
       )}
     >
       {/* Brand Header */}
-      <div className="flex h-16 items-center justify-between px-4 border-b border-slate-200 dark:border-slate-800">
+      <div className="flex h-16 items-center justify-between px-4 border-b border-sidebar-border">
         <Link href="/dashboard" className="flex items-center gap-2.5 overflow-hidden">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-indigo-600 text-white">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center bg-sidebar-primary text-sidebar-primary-foreground">
             <ShieldCheck className="h-5 w-5" />
           </div>
           {sidebarOpen && (
-            <span className="text-lg font-bold tracking-tight text-slate-900 dark:text-white">
+            <span className="text-lg font-bold tracking-tight text-sidebar-foreground">
               InvoStar
             </span>
           )}
         </Link>
         <button
           onClick={toggleSidebar}
-          className="hidden md:flex h-7 w-7 items-center justify-center rounded-md border border-slate-200 bg-slate-50 text-slate-500 hover:bg-slate-100 dark:border-slate-800 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700"
+          className="hidden md:flex h-7 w-7 items-center justify-center border border-sidebar-border bg-sidebar text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
           aria-label="Toggle Sidebar"
         >
           {sidebarOpen ? (
@@ -68,7 +68,7 @@ export function Sidebar() {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 space-y-1 px-2 py-4 overflow-y-auto">
+      <nav className="flex-1 space-y-0.5 px-2 py-3 overflow-y-auto">
         {navItems.map((item) => {
           const isActive =
             pathname === item.href || pathname.startsWith(`${item.href}/`);
@@ -79,13 +79,20 @@ export function Sidebar() {
               href={item.href}
               title={!sidebarOpen ? item.label : undefined}
               className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                "flex items-center gap-3 px-3 py-2 text-sm font-medium transition-colors",
                 isActive
-                  ? "bg-indigo-50 text-indigo-600 dark:bg-indigo-950/50 dark:text-indigo-400"
-                  : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+                  ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                  : "text-sidebar-foreground/70 hover:bg-sidebar-accent/20 hover:text-sidebar-foreground"
               )}
             >
-              <Icon className={cn("h-5 w-5 shrink-0", isActive ? "text-indigo-600 dark:text-indigo-400" : "text-slate-400")} />
+              <Icon
+                className={cn(
+                  "h-5 w-5 shrink-0",
+                  isActive
+                    ? "text-sidebar-accent-foreground"
+                    : "text-sidebar-foreground/40"
+                )}
+              />
               {sidebarOpen && <span>{item.label}</span>}
             </Link>
           );

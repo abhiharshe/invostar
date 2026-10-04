@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -13,6 +14,7 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { PurchasesService } from './purchases.service';
 import { CreatePurchaseDto } from './dto/create-purchase.dto';
+import { UpdatePurchaseDto } from './dto/update-purchase.dto';
 import { QueryPurchaseDto } from './dto/query-purchase.dto';
 import { VoidPurchaseDto } from './dto/void-purchase.dto';
 
@@ -44,6 +46,15 @@ export class PurchasesController {
     return this.purchasesService.findOnePurchase(id);
   }
 
+  @Patch(':id')
+  @ApiOperation({ summary: 'Update a purchase bill' })
+  updatePurchase(
+    @Param('id') id: string,
+    @Body() dto: UpdatePurchaseDto,
+  ) {
+    return this.purchasesService.updatePurchase(id, dto);
+  }
+
   @Patch(':id/void')
   @ApiOperation({ summary: 'Void a purchase bill' })
   voidPurchase(
@@ -51,5 +62,11 @@ export class PurchasesController {
     @Body() dto: VoidPurchaseDto,
   ) {
     return this.purchasesService.voidPurchase(id, dto);
+  }
+
+  @Delete(':id')
+  @ApiOperation({ summary: 'Soft-delete a purchase bill' })
+  deletePurchase(@Param('id') id: string) {
+    return this.purchasesService.deletePurchase(id);
   }
 }
